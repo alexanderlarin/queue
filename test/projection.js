@@ -1,7 +1,9 @@
 import chai, { expect } from 'chai';
 import chaiPromised from 'chai-as-promised';
+import spies from 'chai-spies-next';
 
 chai.use(chaiPromised);
+chai.use(spies);
 
 import Promise from 'bluebird';
 import { EventStream } from '../src/eventstream';

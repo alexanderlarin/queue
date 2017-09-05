@@ -1,5 +1,5 @@
 import chai, { expect } from 'chai';
-import spies from 'chai-spies';
+import spies from 'chai-spies-next';
 import promised from 'chai-as-promised';
 
 chai.use(spies);
