@@ -1,18 +1,18 @@
 import _ from 'lodash';
 import Promise from 'bluebird'
+import Stream from 'stream';
 
-import { Queue } from './queue';
 import { scopeHandlers } from './scope';
 
 
-export class Projection {
+export class Projection extends Stream.Writable {
     constructor(scope, handlers, queries, store, stamp = 0) {
+        super({ objectMode: true });
+
         this._scope = scope;
         this._handlers = _.reduce(handlers, (handlers, events, scope) =>
             _.defaults(handlers, scopeHandlers(scope, events)), {});
         this._queries = scopeHandlers(scope, queries);
-
-        this._queue = new Queue();
 
         this._store = store;
         this._stamp = stamp;
@@ -24,21 +24,18 @@ export class Projection {
     get queries() { return _.keys(this._queries); }
 
     project(stream) {
-        const wait = () => new Promise((resolve, reject) => {
-            if (this._queue.empty)
-                return resolve();
-            this._queue.once('end', resolve);
-            this._queue.once('error', reject);
-        });
-
         return new Promise((resolve, reject) => {
-            stream
-                .on('data', (event) => {
-                    this._queue.push(() => this.handle(event))
-                        .catch((err) => reject(err));
-                })
-                .on('end', () => resolve({ wait }))
-                .on('error', (err) => reject(err));
+            const projection = new Stream.Writable({
+                objectMode: true,
+                write: (event, encoding, done) =>
+                    this.handle(event)
+                        .then(() => done())
+                        .catch((err) => done(err))
+            });
+            projection
+                .once('error', reject)
+                .once('finish', resolve);
+            stream.pipe(projection);
         });
     }
 

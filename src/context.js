@@ -85,18 +85,15 @@ export class Context {
 
     awake() {
         return Promise.all(_.map(this._projections, (projection) => {
-                const stream = this._eventStore.project(projection.events, projection.stamp);
-                return projection.project(stream)
-                    .then(({ wait }) => wait());
-            }));
+            const stream = this._eventStore.project(projection.events, projection.stamp);
+            return projection.project(stream);
+        }));
     }
 
     live() {
-        const waits = Promise.all(_.map(this._projections, (projection) => {
+        return Promise.all(_.map(this._projections, (projection) => {
             const stream = this._eventStore.stream(projection.events);
-            return projection.project(stream)
-                .then(({ wait }) => wait());
+            return projection.project(stream);
         }));
-        return Promise.resolve({ wait: () => waits });
     }
 }

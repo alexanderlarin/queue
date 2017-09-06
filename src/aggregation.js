@@ -1,6 +1,7 @@
-import _ from 'lodash';
+import Stream from 'stream';
 
 import { scopeName, scopeHandlers } from './scope';
+
 
 export class Aggregation {
     constructor(scope, handlers, commands) {
@@ -10,37 +11,42 @@ export class Aggregation {
     }
 
     get scope() { return this._scope; }
-    get events() { return _.keys(this._handlers); }
-    get commands() { return _.keys(this._commands); }
+    get events() { return Object.keys(this._handlers); }
+    get commands() { return Object.keys(this._commands); }
 
     aggregate(stream) {
         return new Promise((resolve, reject) => {
-            let state = { };
+            const state = { };
             let version = 0;
-            return stream
-                .on('data', (event) => {
+            const aggregation = new Stream.Writable({
+                objectMode: true,
+                write: (event, encoding, done) => {
                     const handler = this._handlers[event.name];
                     if (handler) {
                         try {
                             handler(state, event.payload);
                         }
                         catch (err) {
-                            return reject(err);
+                            return done(err);
                         }
                     }
                     version++;
-                })
-                .on('end', () => resolve({ state, version }))
-                .on('error', (err) => reject(err));
+                    return done();
+                }
+            });
+            aggregation
+                .once('error', reject)
+                .once('finish', () => resolve({ state, version }));
+            stream.pipe(aggregation);
         });
     }
 
     command(name, payload, state) {
-        let events = [];
+        const events = [];
         const handler = this._commands[name];
         if (handler) {
             const emit = (name, payload) => {
-                events.push({ name: scopeName(this._scope, name), payload});
+                events.push({ name: scopeName(this._scope, name), payload });
             };
             handler(state, payload, emit);
         }

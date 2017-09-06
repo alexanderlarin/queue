@@ -138,12 +138,11 @@ describe('Projection', () => {
 
         it('single event', () => {
             const stream = new EventStream();
-            const project = projection.project(stream)
-                .then(({ wait }) => wait());
+            const wait = projection.project(stream);
             stream.write({ name: 'domain1.handler1', payload: { id: 1 }, stamp: 1 });
             stream.end();
             return Promise.all([
-                    expect(project).to.eventually.fulfilled
+                    expect(wait).to.eventually.fulfilled
                 ])
                 .then(() => {
                     expect(projection.stamp).to.be.equals(1);
@@ -154,14 +153,13 @@ describe('Projection', () => {
 
         it('multiple events', () => {
             const stream = new EventStream();
-            const project = projection.project(stream)
-                .then(({ wait }) => wait());
+            const wait = projection.project(stream);
             stream.write({ name: 'domain1.handler1', payload: { id: 1 }, stamp: 1 });
             stream.write({ name: 'domain1.handler2', payload: { id: 2 }, stamp: 2 });
             stream.write({ name: 'domain2.handler1', payload: { id: 3 }, stamp: 3 });
             stream.end();
             return Promise.all([
-                    expect(project).to.eventually.fulfilled
+                    expect(wait).to.eventually.fulfilled
                 ])
                 .then(() => {
                     expect(projection.stamp).to.be.equals(3);
@@ -173,14 +171,13 @@ describe('Projection', () => {
 
         it('date after payload field', () => {
             const stream = new EventStream();
-            const project = projection.project(stream)
-                .then(({ wait }) => wait());
+            const wait = projection.project(stream);
             stream.write({ name: 'domain3.handler1', payload: { id: 1 }, stamp: 1, date: 11 });
             stream.write({ name: 'domain3.handler1', payload: { id: 2 }, stamp: 2, date: 12 });
             stream.end();
             return Promise.all([
-                expect(project).to.eventually.fulfilled
-            ])
+                    expect(wait).to.eventually.fulfilled
+                ])
                 .then(() => {
                     expect(projection.stamp).to.be.equals(2);
                     expect(store.stamp).to.be.equals(2);
@@ -190,14 +187,13 @@ describe('Projection', () => {
 
         it('skip events with less stamp', () => {
             const stream = new EventStream();
-            const project = projection.project(stream)
-                .then(({ wait }) => wait());
+            const wait = projection.project(stream);
             stream.write({ name: 'domain1.handler1', payload: { id: 1 }, stamp: 1 });
             stream.write({ name: 'domain1.handler2', payload: { id: 2 }, stamp: 1 });
             stream.write({ name: 'domain2.handler1', payload: { id: 3 }, stamp: 2 });
             stream.end();
             return Promise.all([
-                    expect(project).to.eventually.fulfilled
+                    expect(wait).to.eventually.fulfilled
                 ])
                 .then(() => {
                     expect(projection.stamp).to.be.equals(2);
