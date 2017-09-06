@@ -5,10 +5,8 @@ import Stream from 'stream';
 import { scopeHandlers } from './scope';
 
 
-export class Projection extends Stream.Writable {
+export class Projection {
     constructor(scope, handlers, queries, store, stamp = 0) {
-        super({ objectMode: true });
-
         this._scope = scope;
         this._handlers = _.reduce(handlers, (handlers, events, scope) =>
             _.defaults(handlers, scopeHandlers(scope, events)), {});
