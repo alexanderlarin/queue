@@ -1,9 +1,8 @@
 import Promise from 'bluebird';
-import EventEmitter from 'eventemitter3';
 
-export class Queue extends EventEmitter {
+
+export class Queue {
     constructor(options) {
-        super();
         this._persist = options && options.persist;
 
         this._jobs = [];
@@ -31,7 +30,6 @@ export class Queue extends EventEmitter {
             })
             .then(resolve)
             .catch((err) => {
-                this.emit('error', err);
                 if (!this._persist)
                     this._cancel = true;
                 return reject(err);
@@ -50,7 +48,6 @@ export class Queue extends EventEmitter {
             job();
             return true;
         }
-        this.emit('end');
         return false;
     }
 }
