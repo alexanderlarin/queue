@@ -18,8 +18,8 @@ export class Projection {
 
     get stamp() { return this._stamp; }
     get scope() { return this._scope; }
-    get events() { return _.keys(this._handlers); }
-    get queries() { return _.keys(this._queries); }
+    get events() { return Object.keys(this._handlers); }
+    get queries() { return Object.keys(this._queries); }
 
     project(stream) {
         return new Promise((resolve, reject) => {
