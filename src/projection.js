@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Promise from 'bluebird'
 import Stream from 'stream';
 
@@ -8,8 +7,13 @@ import { scopeHandlers } from './scope';
 export class Projection {
     constructor(scope, handlers, queries, store, stamp = 0) {
         this._scope = scope;
-        this._handlers = _.reduce(handlers, (handlers, events, scope) =>
-            _.defaults(handlers, scopeHandlers(scope, events)), {});
+        this._handlers = !handlers ? {} : Object.keys(handlers).reduce((obj, value) => {
+            if (typeof handlers[value] === 'function')
+                obj[value] = handlers[value];
+            if (typeof handlers[value] === 'object')
+                obj = Object.assign(obj, scopeHandlers(value, handlers[value]));
+            return obj;
+        }, { });
         this._queries = scopeHandlers(scope, queries);
 
         this._store = store;

@@ -30,6 +30,7 @@ describe('Projection', () => {
 
         it('events', () => {
             const pr = new Projection('pr', {
+                'domain1.handler1'() { },
                 domain2: {
                     handler1() { },
                     handler2() { }
@@ -39,7 +40,7 @@ describe('Projection', () => {
                 }
             });
             expect(pr.scope).to.be.equals('pr');
-            expect(pr.events).to.be.deep.equals(['domain2.handler1', 'domain2.handler2', 'domain3.handler1']);
+            expect(pr.events).to.be.deep.equals(['domain1.handler1', 'domain2.handler1', 'domain2.handler2', 'domain3.handler1']);
             expect(pr.queries).to.be.empty;
             expect(pr.stamp).to.be.equals(0);
         });
