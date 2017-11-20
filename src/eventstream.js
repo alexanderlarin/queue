@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import stream from 'stream';
 
 
@@ -10,7 +9,7 @@ export class EventStream extends stream.Transform {
     }
 
     _transform(event, encoding, callback) {
-        if (!this._filter || _.includes(this._filter, event.name))
+        if (!this._filter || this._filter.find((name) => name === event.name))
             this.push(event);
         callback();
     }

@@ -24,9 +24,9 @@ describe('Aggregation', () => {
 
         it('events', () => {
             const ag = new Aggregation('domain1', {
-                    handler1() { },
-                    handler2() { }
-                });
+                handler1() { },
+                handler2() { }
+            });
             expect(ag.scope).to.be.equals('domain1');
             expect(ag.events).to.be.deep.equals(['domain1.handler1', 'domain1.handler2']);
             expect(ag.commands).to.be.empty;
@@ -124,7 +124,7 @@ describe('Aggregation', () => {
             create(state, { id }, emit) {
                 if (!id)
                     return emit('created', { id: 'idi' });
-                if (state.id == id)
+                if (state.id === id)
                     emit('stated', { stateId: state.id });
                 return emit('existed', { id });
             }

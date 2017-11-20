@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Promise from 'bluebird';
 
 import { nameScope } from './scope';
@@ -39,7 +38,7 @@ export class Context {
         const aggregation = this._aggregations[scope];
         if (!aggregation)
             return Promise.reject(new Error(`Scope [${scope}] is not supported by context`));
-        if (!_.includes(aggregation.commands, name))
+        if (!aggregation.commands.find((command) => command === name))
             return Promise.reject(new Error(`Command [${name}] is not supported by context scope [${scope}]`));
         const stream = this._eventStore.aggregate(aggregate);
 
@@ -49,7 +48,7 @@ export class Context {
                 return { events, version };
             })
             .then(({ events, version }) => {
-                if (_.isEmpty(events))
+                if (!events.length)
                     return [];
                 return this._eventStore.push(aggregate, version, events);
             });
@@ -78,20 +77,22 @@ export class Context {
         const projection = this._projections[scope];
         if (!projection)
             return Promise.reject(new Error(`Scope [${scope}] is not supported by context`));
-        if (!_.includes(projection.queries, name))
+        if (!projection.queries.find((query) => query === name))
             return Promise.reject(new Error(`Query [${name}] is not supported by context scope [${scope}]`));
         return projection.query(name, payload);
     }
 
     awake() {
-        return Promise.all(_.map(this._projections, (projection) => {
+        return Promise.all(Object.keys(this._projections).map((name) => {
+            const projection = this._projections[name];
             const stream = this._eventStore.project(projection.events, projection.stamp);
             return projection.project(stream);
         }));
     }
 
     live() {
-        return Promise.all(_.map(this._projections, (projection) => {
+        return Promise.all(Object.keys(this._projections).map((name) => {
+            const projection = this._projections[name];
             const stream = this._eventStore.stream(projection.events);
             return projection.project(stream);
         }));

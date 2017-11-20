@@ -338,7 +338,7 @@ describe('Context', () => {
             };
             const stateStore = {
                 store(scope) {
-                    if (scope == 'scope1')
+                    if (scope === 'scope1')
                         return Promise.resolve({
                             store: {
                                 collection: collection1,

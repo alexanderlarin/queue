@@ -1,6 +1,3 @@
-import _ from 'lodash';
-
-
 export class StateStore {
     static connect(db) {
         return new StateStore(db);
@@ -17,7 +14,7 @@ export class StateStore {
                 fields: { stamp: 1, _id: 0 }
             })
             .then((data) => {
-                const stamp = _.get(data, 'stamp', 0);
+                const stamp = (data && data.stamp) || 0;
 
                 const store = {
                     collection: this._db.collection(scope),

@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 import { Queue } from './queue';
 import { EventStream } from './eventstream';
 
@@ -8,7 +6,7 @@ export class EventStore {
         const events = db.collection('events');
         return events.find({}, { _id: 0, stamp: 1 }).sort({ stamp: -1 }).limit(1).next()
             .then((event) => {
-                const stamp = _.get(event, 'stamp', 0);
+                const stamp = event.stamp || 0;
                 return new EventStore(events, stamp);
             });
     }
@@ -34,7 +32,7 @@ export class EventStore {
 
     push(aggregate, version, events) {
         const stamp = this._stamp;
-        const batch = _.map(events, (event, index) => {
+        const batch = events.map((event, index) => {
             return {
                 name: event.name,
                 aggregate: aggregate,
@@ -44,17 +42,17 @@ export class EventStore {
                 date: new Date()
             }
         });
-        this._stamp = stamp + _.size(events);
+        this._stamp = stamp + events.length;
 
         return this._queue.push(() => {
                 return this._store.find({ aggregate: aggregate }, { _id: 0, version: 1 }).sort({ version: -1 }).next()
                     .then((event) => {
-                        if (_.get(event, 'version', 0) > version)
+                        if ((event.version || 0) > version)
                             return Promise.reject(new Error(`Conflict events for aggregate [${aggregate}] with version [${version}]`));
                         return this._store.insertMany(batch);
                     });
             })
-            .then(() => _.forEach(batch, (event) => this._stream.write(event)));
+            .then(() => batch.forEach((event) => this._stream.write(event)));
     }
 
     stream(events) {
