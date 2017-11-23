@@ -91,10 +91,11 @@ export class Context {
     }
 
     live() {
-        return Promise.all(Object.keys(this._projections).map((name) => {
+        const waits = Object.keys(this._projections).map((name) => {
             const projection = this._projections[name];
             const stream = this._eventStore.stream(projection.events);
             return projection.project(stream);
-        }));
+        });
+        return Promise.resolve({ wait: () => Promise.all(waits) });
     }
 }

@@ -247,7 +247,7 @@ describe('Context', () => {
             };
             const stateStore = {
                 store(scope) {
-                    if (scope == 'scope1')
+                    if (scope === 'scope1')
                         return Promise.resolve({
                             store: {
                                 collection: collection1,
@@ -255,7 +255,7 @@ describe('Context', () => {
                             },
                             stamp: 1
                         });
-                    if (scope == 'scope2')
+                    if (scope === 'scope2')
                         return Promise.resolve({
                             store: {
                                 collection: collection2,
@@ -346,7 +346,7 @@ describe('Context', () => {
                             },
                             stamp: 1
                         });
-                    if (scope == 'scope2')
+                    if (scope === 'scope2')
                         return Promise.resolve({
                             store: {
                                 collection: collection2,
@@ -362,7 +362,8 @@ describe('Context', () => {
 
         it('empty projections', () => {
             const promise = context.awake()
-                .then(() => context.live());
+                .then(() => context.live())
+                .then(({ wait }) => wait());
             return expect(promise).to.eventually.fulfilled;
         });
 
@@ -396,7 +397,8 @@ describe('Context', () => {
                     awakeStream.end();
                     return awake;
                 })
-                .then(() => context.live());
+                .then(() => context.live())
+                .then(({ wait }) => wait());
             liveStream.write({ name: 'scope3.created', stamp: 1, payload: { id: 1 } });
             liveStream.write({ name: 'scope3.created', stamp: 2, payload: { id: 2 } });
             liveStream.write({ name: 'scope4.created', stamp: 3, payload: { id: 3 } });
