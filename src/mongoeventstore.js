@@ -2,34 +2,38 @@ import { EventStream } from './eventstream';
 import { Queue } from './queue';
 
 
-export class EventStore {
+export class MongoEventStore {
     constructor(db) {
-        this._store = db.collection('events');
+        this._db = db;
 
         this._queue = new Queue({ persist: true });
         this._stream = new EventStream();
     }
 
+    get collection() {
+        return this._db.collection('events');
+    }
+
     aggregate(aggregate) {
-        return this._store.find({ aggregate }, { _id: 0 }).sort({ version: 1 }).stream();
+        return this.collection.find({ aggregate }, { _id: 0 }).sort({ version: 1 }).stream();
     }
 
     project(events, stamp) {
-        return this._store.find({ name: { $in: events }, stamp: { $gt: stamp } }, { _id: 0 }).sort({ stamp: 1 }).stream();
+        return this.collection.find({ name: { $in: events }, stamp: { $gt: stamp } }, { _id: 0 }).sort({ stamp: 1 }).stream();
     }
 
     version(aggregate) {
-        return this._store.find({ aggregate }, { _id: 0, version: 1 }).sort({ version: -1 }).next()
+        return this.collection.find({ aggregate }, { _id: 0, version: 1 }).sort({ version: -1 }).next()
             .then((event) => (event && event.version) || 0);
     }
 
     stamp() {
-        return this._store.find({}, { _id: 0, stamp: 1 }).sort({ stamp: -1 }).limit(1).next()
+        return this.collection.find({}, { _id: 0, stamp: 1 }).sort({ stamp: -1 }).limit(1).next()
             .then((event) => (event && event.stamp) || 0);
     }
 
     store(batch) {
-        return this._store.insertMany(batch);
+        return this.collection.insertMany(batch);
     }
 
     push(aggregate, version, events) {

@@ -5,7 +5,7 @@ import { scopeHandlers } from './scope';
 
 
 export class Projection {
-    constructor(scope, handlers, queries, store, stamp = 0) {
+    constructor(scope, handlers, queries, store) {
         this._scope = scope;
         this._handlers = !handlers ? {} : Object.keys(handlers).reduce((obj, value) => {
             if (typeof handlers[value] === 'function')
@@ -15,12 +15,10 @@ export class Projection {
             return obj;
         }, { });
         this._queries = scopeHandlers(scope, queries);
-
         this._store = store;
-        this._stamp = stamp;
     }
 
-    get stamp() { return this._stamp; }
+    get stamp() { return (this._store && this._store.stamp) || 0; }
     get scope() { return this._scope; }
     get events() { return Object.keys(this._handlers); }
     get queries() { return Object.keys(this._queries); }
@@ -41,15 +39,16 @@ export class Projection {
         });
     }
 
-    handle(event) {
-        if (event.stamp <= this._stamp)
+    handle({ name, aggregate, stamp, date, payload }) {
+        if (stamp <= this._store.stamp)
             return Promise.resolve();
-        const handler = this._handlers[event.name];
+        const handler = this._handlers[name];
         if (!handler)
             return Promise.resolve();
-        return handler(this._store.collection, event.aggregate, event.payload, event.date)
-            .then(() => this._store.set('stamp', event.stamp))
-            .then(() => this._stamp = event.stamp);
+        return this._store.project((collection) =>
+            handler(collection, aggregate, payload, date),
+            stamp
+        );
     }
 
     query(name, payload) {
@@ -57,7 +56,7 @@ export class Projection {
             const handler = this._queries[name];
             if  (!handler)
                 return reject(new Error(`there is no handler with name [${name}] to process the query`));
-            return resolve(handler(this._store.collection, payload));
+            return resolve(this._store.query((collection) => handler(collection, payload)));
         });
     }
 }

@@ -124,9 +124,8 @@ describe('Context', () => {
 
         beforeEach(() => {
             context = new Context(null, {
-                store() {
+                projection() {
                     return new Promise.resolve({
-                        store: null,
                         stamp: 5
                     })
                 }
@@ -174,12 +173,11 @@ describe('Context', () => {
         beforeEach(() => {
             spy = chai.spy();
             context = new Context(null, {
-                store() {
+                projection() {
                     return new Promise.resolve({
-                        store: {
-                            collection: { get: spy }
-                        },
-                        stamp: 0
+                        query(handler) {
+                            return handler({ get: spy });
+                        }
                     })
                 }
             });
@@ -245,28 +243,24 @@ describe('Context', () => {
                     return stream;
                 }
             };
-            const stateStore = {
-                store(scope) {
+            const store = {
+                projection(scope) {
                     if (scope === 'scope1')
                         return Promise.resolve({
-                            store: {
-                                collection: collection1,
-                                set() { return Promise.resolve(); }
-                            },
-                            stamp: 1
+                            stamp: 1,
+                            project: (handler, stamp) => handler(collection1)
+                                .then(() => this.stamp = stamp)
                         });
                     if (scope === 'scope2')
                         return Promise.resolve({
-                            store: {
-                                collection: collection2,
-                                set() { return Promise.resolve(); }
-                            },
-                            stamp: 2
+                            stamp: 2,
+                            project: (handler, stamp) => handler(collection2)
+                                .then(() => this.stamp = stamp)
                         });
                     return Promise.reject();
                 }
             };
-            context = new Context(eventStore, stateStore);
+            context = new Context(eventStore, store);
         });
 
         it('empty projections', () => {
@@ -331,33 +325,29 @@ describe('Context', () => {
                 project() {
                     return awakeStream;
                 },
-                stream(events) {
+                pipe(events) {
                     streamSpy(events);
                     return liveStream;
                 }
             };
-            const stateStore = {
-                store(scope) {
+            const store = {
+                projection(scope) {
                     if (scope === 'scope1')
                         return Promise.resolve({
-                            store: {
-                                collection: collection1,
-                                set() { return Promise.resolve(); }
-                            },
-                            stamp: 1
+                            stamp: 1,
+                            project: (handler, stamp) => handler(collection1)
+                                .then(() => this.stamp = stamp)
                         });
                     if (scope === 'scope2')
                         return Promise.resolve({
-                            store: {
-                                collection: collection2,
-                                set() { return Promise.resolve(); }
-                            },
-                            stamp: 2
+                            stamp: 2,
+                            project: (handler, stamp) => handler(collection2)
+                                .then(() => this.stamp = stamp)
                         });
                     return Promise.reject();
                 }
             };
-            context = new Context(eventStore, stateStore);
+            context = new Context(eventStore, store);
         });
 
         it('empty projections', () => {

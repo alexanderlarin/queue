@@ -6,9 +6,9 @@ import { Projection } from './projection';
 
 
 export class Context {
-    constructor(eventStore, stateStore) {
+    constructor(eventStore, store) {
         this._eventStore = eventStore;
-        this._stateStore = stateStore;
+        this._store = store;
 
         this._aggregations = { };
         this._projections = { };
@@ -59,9 +59,9 @@ export class Context {
             return Promise.reject(new Error(`Projection should have valid non-empty [scope] property`));
         if (scope in this._projections)
             return Promise.reject(new Error(`Context already has projection with scope [${scope}]`));
-        return this._stateStore.store(scope)
-            .then(({ store, stamp }) => {
-                const projection = new Projection(scope, handlers, queries, store, stamp);
+        return this._store.projection(scope)
+            .then((store) => {
+                const projection = new Projection(scope, handlers, queries, store);
                 this._projections[scope] = projection;
                 return {
                     scope: projection.scope,
@@ -93,7 +93,7 @@ export class Context {
     live() {
         const waits = Object.keys(this._projections).map((name) => {
             const projection = this._projections[name];
-            const stream = this._eventStore.stream(projection.events);
+            const stream = this._eventStore.pipe(projection.events);
             return projection.project(stream);
         });
         return Promise.resolve({ wait: () => Promise.all(waits) });

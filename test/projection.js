@@ -81,9 +81,9 @@ describe('Projection', () => {
         });
 
         it('initial stamp', () => {
-            const pr1 = new Projection('pr', {}, {}. null, 0);
+            const pr1 = new Projection('pr', {}, {}, { get stamp() { return 0; } });
             expect(pr1.stamp).to.be.equals(0);
-            const pr2 = new Projection('pr', { }, { }, null, 10);
+            const pr2 = new Projection('pr', { }, { }, { get stamp() { return 10; } });
             expect(pr2.stamp).to.be.equals(10);
         })
     });
@@ -108,18 +108,16 @@ describe('Projection', () => {
         beforeEach(() => {
             store = {
                 stamp: 0,
-
                 collection: {
                     data: [],
                     push(id) {
                         this.data.push(id);
                     }
                 },
-                set(name, value) {
-                    if (name != 'stamp')
-                        return Promise.reject();
-                    this.stamp = value;
-                    return Promise.resolve();
+
+                project(handler, stamp) {
+                    return handler(this.collection)
+                        .then(() => this.stamp = stamp);
                 }
             };
 
@@ -251,7 +249,11 @@ describe('Projection', () => {
             getSpy = chai.spy();
             takeSpy = chai.spy();
 
-            const store = { collection: { get: getSpy, take: takeSpy } };
+            const store = {
+                query(handler) {
+                    return handler({ get: getSpy, take: takeSpy })
+                }
+            };
 
             projection = new Projection('pr', { }, {
                 ok() {
