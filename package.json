@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
+    "build:watch": "npm run build -- --watch",
     "test": "mocha --compilers js:babel-core/register \"test/*.js\"",
     "test:watch": "npm run test -- --watch",
     "prepublish": "npm run build"
